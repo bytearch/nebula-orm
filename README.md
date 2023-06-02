@@ -1,2 +1,2 @@
 # nebula-orm
-nebula orm框架
+Distributed ORM Framework for Nebula
