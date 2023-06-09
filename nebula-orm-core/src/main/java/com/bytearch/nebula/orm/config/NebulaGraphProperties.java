@@ -12,8 +12,8 @@ public class NebulaGraphProperties {
      * 格式：ip:port
      */
     private List<String> hostAddresses;
-    private int minConnsSize;
-    private int maxConnSize;
+    private int minConnsSize = 5;
+    private int MaxConnsSize = 500;
     private int timeout;
     private int idleTime;
     private String space;

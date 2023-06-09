@@ -4,8 +4,10 @@ import com.bytearch.nebula.orm.annotation.GraphEdge;
 import com.bytearch.nebula.orm.annotation.GraphProperty;
 import com.bytearch.nebula.orm.annotation.GraphVertex;
 import com.bytearch.nebula.orm.annotation.VID;
+import com.bytearch.nebula.orm.entity.ColumnEntity;
 import com.bytearch.nebula.orm.entity.GraphEdgeEntity;
 import com.bytearch.nebula.orm.entity.GraphVertexEntity;
+import com.bytearch.nebula.orm.entity.OperatorEnum;
 import com.bytearch.nebula.orm.exception.NebulaOrmException;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.lang.StringEscapeUtils;
@@ -16,10 +18,7 @@ import java.lang.reflect.Field;
 import java.lang.reflect.Modifier;
 import java.text.DateFormat;
 import java.text.SimpleDateFormat;
-import java.util.ArrayList;
-import java.util.Date;
-import java.util.List;
-import java.util.Objects;
+import java.util.*;
 
 /**
  * SQL创建工具类
@@ -272,6 +271,42 @@ public class SQLBuildUtils {
             }
         }
         return stringBuffer;
+    }
+
+    public static StringBuilder fromCondition(String name, List<ColumnEntity> columnEntities) {
+        StringBuilder builder = new StringBuilder();
+        if (CollectionUtils.isEmpty(columnEntities)) {
+            return builder;
+        }
+        for (ColumnEntity columnEntity : columnEntities) {
+            if (builder.length() > 0) {
+                builder.append(" AND ");
+            }
+            OperatorEnum op = columnEntity.getOperatorEnum();
+            List<OperatorEnum> operatorEnums = Arrays.asList(OperatorEnum.EQUAL, OperatorEnum.GREATER_THAN, OperatorEnum.GREATER_THAN_OR_EQUAL, OperatorEnum.LESS_THAN, OperatorEnum.LESS_THAN_OR_EQUAL, OperatorEnum.NOT_EQUAL);
+            String value = null;
+            if (operatorEnums.contains(op)) {
+                builder.append(" ").append(name).append(".").append(columnEntity.getColumn()).append(op.getSymbol());
+                buildValue(builder, columnEntity.getValue());
+            } else if (Arrays.asList(OperatorEnum.IN, OperatorEnum.NOT_IN).contains(op)) {
+                if (columnEntity.getValue() instanceof Collection) {
+                    throw new RuntimeException(String.format("condition column:%s, op:%s, must be collection", columnEntity.getColumn(), op.getSymbol()));
+                }
+                //todo
+            } else {
+                throw new RuntimeException("op" + op.getSymbol() + "cannot be operator");
+            }
+        }
+        return builder;
+    }
+
+
+    private static void buildValue(StringBuilder builder, Object v) {
+        if (v instanceof String) {
+            builder.append("'").append(v).append("'");
+        } else {
+            builder.append(v);
+        }
     }
 
 }
