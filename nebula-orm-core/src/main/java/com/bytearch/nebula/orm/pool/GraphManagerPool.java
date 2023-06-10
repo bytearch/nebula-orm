@@ -15,14 +15,30 @@ public class GraphManagerPool {
     private final static Map<String, NebulaGraphProperties> nebulaGraphPropertiesMap = new HashMap<>();
 
 
-    public void initNebulaSessionManager(List<NebulaGraphProperties> nebulaGraphProperties) {
+    public static void initNebulaSessionManager(List<NebulaGraphProperties> nebulaGraphProperties) {
         for (NebulaGraphProperties nebulaGraphProperty : nebulaGraphProperties) {
             GraphSessionManager graphSessionManager = new GraphSessionManager();
             graphSessionManager.setNebulaGraphProperties(nebulaGraphProperty);
             graphSessionManager.init();
+            CP.put(nebulaGraphProperty.getSpace(), graphSessionManager);
         }
     }
-    public static GraphSessionManager getSession(String space) {
+    public static void release(GraphSession session) {
+        GraphSessionManager graphSessionManager = CP.get(session.getSpace());
+        if (graphSessionManager == null) {
+            return;
+        }
+        graphSessionManager.releaseSession(session);
+    }
+
+    public static void close(GraphSession session) {
+        GraphSessionManager graphSessionManager = CP.get(session.getSpace());
+        if (graphSessionManager == null) {
+            return;
+        }
+        graphSessionManager.closeSession(session);
+    }
+    public static GraphSession getSession(String space) {
         if (StringUtils.isBlank(space)) {
             throw new NebulaOrmException("space cannot be empty!");
         }
@@ -33,10 +49,15 @@ public class GraphManagerPool {
                 graphSessionManager = CP.get(space);
                 if (graphSessionManager == null) {
                     //创建nebulaSessionManager
+                    graphSessionManager.setNebulaGraphProperties(nebulaGraphProperties);
                     graphSessionManager.init(nebulaGraphProperties);
                 }
             }
         }
-        return graphSessionManager;
+       return graphSessionManager.getSession();
+    }
+
+    public static GraphSessionManager getGraphSessionManager(String space) {
+       return CP.get(space);
     }
 }

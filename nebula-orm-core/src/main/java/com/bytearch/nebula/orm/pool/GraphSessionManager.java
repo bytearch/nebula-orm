@@ -6,7 +6,7 @@ import com.vesoft.nebula.client.graph.NebulaPoolConfig;
 import com.vesoft.nebula.client.graph.data.HostAddress;
 import com.vesoft.nebula.client.graph.net.NebulaPool;
 import lombok.extern.slf4j.Slf4j;
-import org.springframework.util.StringUtils;
+import org.apache.commons.lang3.StringUtils;
 
 import java.io.Serializable;
 import java.net.UnknownHostException;
@@ -97,7 +97,7 @@ public class GraphSessionManager implements Serializable {
             freeCount.incrementAndGet();
             totalCount.incrementAndGet();
         }
-        if (StringUtils.isEmpty(space)) space = nebulaGraphProperties.getSpace();
+        if (StringUtils.isNotBlank(space)) space = nebulaGraphProperties.getSpace();
 
 
 
