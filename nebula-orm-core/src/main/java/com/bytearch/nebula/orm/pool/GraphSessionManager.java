@@ -149,7 +149,7 @@ public class GraphSessionManager implements Serializable {
                         }
                     }
                 }
-                log.info("【新】获取Session 耗时 :{} ms", System.currentTimeMillis() - start);
+                log.debug("获取Session:{} 耗时 :{} ms", graphSession, System.currentTimeMillis() - start);
                 return graphSession;
             }
         } finally {

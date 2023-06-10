@@ -1,11 +1,11 @@
 package com.bytearch.nebula.orm.pool;
 
+import com.bytearch.nebula.orm.config.GraphGroupConfig;
 import com.bytearch.nebula.orm.config.NebulaGraphProperties;
 import com.bytearch.nebula.orm.exception.NebulaOrmException;
 import org.apache.commons.lang3.StringUtils;
 
 import java.util.HashMap;
-import java.util.List;
 import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
 
@@ -20,14 +20,16 @@ public class GraphManagerPool {
     private final static Map<String, NebulaGraphProperties> nebulaGraphPropertiesMap = new HashMap<>();
 
 
-    public static void initNebulaSessionManager(List<NebulaGraphProperties> nebulaGraphProperties) {
-        for (NebulaGraphProperties nebulaGraphProperty : nebulaGraphProperties) {
+    public static void initNebulaSessionManager(GraphGroupConfig graphGroupConfig) {
+        for (Map.Entry<String, NebulaGraphProperties> nebulaGraphPropertiesEntry : graphGroupConfig.getProperties().entrySet()) {
             GraphSessionManager graphSessionManager = new GraphSessionManager();
-            graphSessionManager.setNebulaGraphProperties(nebulaGraphProperty);
+            graphSessionManager.setNebulaGraphProperties(nebulaGraphPropertiesEntry.getValue());
             graphSessionManager.init();
-            CP.put(nebulaGraphProperty.getName(), graphSessionManager);
-            nebulaGraphPropertiesMap.put(nebulaGraphProperty.getName(), nebulaGraphProperty);
+            CP.put(nebulaGraphPropertiesEntry.getKey(), graphSessionManager);
+            nebulaGraphPropertiesMap.put(nebulaGraphPropertiesEntry.getKey(), nebulaGraphPropertiesEntry.getValue());
         }
+
+
     }
     public static void release(GraphSession session) {
         GraphSessionManager graphSessionManager = CP.get(session.getName());

@@ -26,6 +26,9 @@ public class GraphSession implements Serializable {
         GraphManagerPool.close(this);
     }
 
+    private GraphSession() {
+
+    }
     public GraphSession(Session session, String name, String space) {
         this.session = session;
         this.name = name;
@@ -38,5 +41,16 @@ public class GraphSession implements Serializable {
 
     public static GraphSessionManager getSessionManager(String name) {
         return GraphManagerPool.getGraphSessionManager(name);
+    }
+
+    @Override
+    public String toString() {
+        return "GraphSession{" +
+                "session=" + session +
+                ", name='" + name + '\'' +
+                ", space='" + space + '\'' +
+                ", lastAccessTime=" + lastAccessTime +
+                ", needActiveTest=" + needActiveTest +
+                '}';
     }
 }
