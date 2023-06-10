@@ -8,6 +8,7 @@ import java.io.Serializable;
 @Data
 public class GraphSession implements Serializable {
     private Session session;
+    private String name;
     private String space;
     private Long lastAccessTime = System.currentTimeMillis();
 
@@ -25,16 +26,17 @@ public class GraphSession implements Serializable {
         GraphManagerPool.close(this);
     }
 
-    public GraphSession(Session session, GraphSessionManager manager) {
+    public GraphSession(Session session, String name, String space) {
         this.session = session;
-        this.space = manager.getSpace();
+        this.name = name;
+        this.space = space;
     }
 
     public boolean ping() {
         return this.session.ping();
     }
 
-    public static GraphSessionManager getSessionManager(String space) {
-        return GraphManagerPool.getGraphSessionManager(space);
+    public static GraphSessionManager getSessionManager(String name) {
+        return GraphManagerPool.getGraphSessionManager(name);
     }
 }

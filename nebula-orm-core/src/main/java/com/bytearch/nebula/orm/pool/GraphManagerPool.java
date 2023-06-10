@@ -10,8 +10,13 @@ import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
 
 public class GraphManagerPool {
+    /**
+     * 对象池
+     */
     private final static ConcurrentHashMap<String, GraphSessionManager> CP = new ConcurrentHashMap<>();
-
+    /**
+     * 属性
+     */
     private final static Map<String, NebulaGraphProperties> nebulaGraphPropertiesMap = new HashMap<>();
 
 
@@ -20,11 +25,12 @@ public class GraphManagerPool {
             GraphSessionManager graphSessionManager = new GraphSessionManager();
             graphSessionManager.setNebulaGraphProperties(nebulaGraphProperty);
             graphSessionManager.init();
-            CP.put(nebulaGraphProperty.getSpace(), graphSessionManager);
+            CP.put(nebulaGraphProperty.getName(), graphSessionManager);
+            nebulaGraphPropertiesMap.put(nebulaGraphProperty.getName(), nebulaGraphProperty);
         }
     }
     public static void release(GraphSession session) {
-        GraphSessionManager graphSessionManager = CP.get(session.getSpace());
+        GraphSessionManager graphSessionManager = CP.get(session.getName());
         if (graphSessionManager == null) {
             return;
         }
@@ -32,24 +38,27 @@ public class GraphManagerPool {
     }
 
     public static void close(GraphSession session) {
-        GraphSessionManager graphSessionManager = CP.get(session.getSpace());
+        GraphSessionManager graphSessionManager = CP.get(session.getName());
         if (graphSessionManager == null) {
             return;
         }
         graphSessionManager.closeSession(session);
     }
-    public static GraphSession getSession(String space) {
-        if (StringUtils.isBlank(space)) {
+    public static GraphSession getSession(String name) {
+        if (StringUtils.isBlank(name)) {
             throw new NebulaOrmException("space cannot be empty!");
         }
-        NebulaGraphProperties nebulaGraphProperties = nebulaGraphPropertiesMap.get(space);
-        GraphSessionManager graphSessionManager = CP.get(space);
+        GraphSessionManager graphSessionManager = CP.get(name);
         if (graphSessionManager == null) {
+            NebulaGraphProperties nebulaGraphProperties = nebulaGraphPropertiesMap.get(name);
+            if (nebulaGraphProperties == null) {
+                throw new NebulaOrmException("nebulaGraphProperties cannot be empty");
+            }
             synchronized (GraphManagerPool.class) {
-                graphSessionManager = CP.get(space);
+                graphSessionManager = CP.get(name);
                 if (graphSessionManager == null) {
+                    graphSessionManager = new GraphSessionManager();
                     //创建nebulaSessionManager
-                    graphSessionManager.setNebulaGraphProperties(nebulaGraphProperties);
                     graphSessionManager.init(nebulaGraphProperties);
                 }
             }
@@ -57,7 +66,7 @@ public class GraphManagerPool {
        return graphSessionManager.getSession();
     }
 
-    public static GraphSessionManager getGraphSessionManager(String space) {
-       return CP.get(space);
+    public static GraphSessionManager getGraphSessionManager(String name) {
+       return CP.get(name);
     }
 }

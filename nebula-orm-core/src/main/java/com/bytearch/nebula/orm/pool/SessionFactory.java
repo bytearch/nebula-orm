@@ -14,11 +14,11 @@ import java.util.concurrent.ConcurrentHashMap;
 @Slf4j
 public class SessionFactory {
     private static ConcurrentHashMap<String, NebulaPool> concurrentHashMap = new ConcurrentHashMap<>();
-    public static GraphSession create(GraphSessionManager manager, NebulaGraphProperties nebulaGraphProperties, NebulaPool nebulaPool) {
+    public static GraphSession create(NebulaGraphProperties nebulaGraphProperties, NebulaPool nebulaPool) {
         try {
             Session session = nebulaPool.getSession(nebulaGraphProperties.getUserName(), nebulaGraphProperties.getPassword(), true);
             session.execute("USE " + nebulaGraphProperties.getSpace() + ";");
-            return new GraphSession(session, manager);
+            return new GraphSession(session, nebulaGraphProperties.getName(), nebulaGraphProperties.getSpace());
         } catch (Exception e) {
             log.error("create session error e:", e);
             throw new NebulaOrmException(e.getMessage());
