@@ -19,11 +19,11 @@ public class GraphSession implements Serializable {
 
 
     public  void release() {
-        GraphManagerContainer.release(this);
+        GraphSessionContainer.release(this);
     }
 
     public  void close() {
-        GraphManagerContainer.close(this);
+        GraphSessionContainer.close(this);
     }
 
     private GraphSession() {
@@ -40,7 +40,7 @@ public class GraphSession implements Serializable {
     }
 
     public static GraphSessionManager getSessionManager(String name) {
-        return GraphManagerContainer.getGraphSessionManager(name);
+        return GraphSessionContainer.getGraphSessionManager(name);
     }
 
     @Override

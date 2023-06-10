@@ -9,7 +9,7 @@ import java.util.HashMap;
 import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
 
-public class GraphManagerContainer {
+public class GraphSessionContainer {
     /**
      * 对象池
      */
@@ -52,7 +52,7 @@ public class GraphManagerContainer {
             if (nebulaGraphProperties == null) {
                 throw new NebulaOrmException("nebulaGraphProperties cannot be empty");
             }
-            synchronized (GraphManagerContainer.class) {
+            synchronized (GraphSessionContainer.class) {
                 graphSessionManager = CP.get(groupName);
                 if (graphSessionManager == null) {
                     graphSessionManager = new GraphSessionManager(groupName, nebulaGraphProperties);
