@@ -8,6 +8,7 @@ import com.vesoft.nebula.client.graph.net.NebulaPool;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.util.StringUtils;
 
+import java.io.Serializable;
 import java.net.UnknownHostException;
 import java.util.ArrayList;
 import java.util.LinkedList;
@@ -18,7 +19,7 @@ import java.util.concurrent.locks.Condition;
 import java.util.concurrent.locks.ReentrantLock;
 
 @Slf4j
-public class GraphSessionManager {
+public class GraphSessionManager implements Serializable {
     private static Integer maxIdeTimeSecond = 60 * 1000;
     private static Integer maxConnectionSize = 500;
     private static Integer minConnectionSize = 50;

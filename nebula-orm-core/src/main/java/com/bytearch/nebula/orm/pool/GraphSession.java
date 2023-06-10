@@ -3,8 +3,10 @@ package com.bytearch.nebula.orm.pool;
 import com.vesoft.nebula.client.graph.net.Session;
 import lombok.Data;
 
+import java.io.Serializable;
+
 @Data
-public class GraphSession {
+public class GraphSession implements Serializable {
     private Session session;
     private String space;
     private Long lastAccessTime = System.currentTimeMillis();

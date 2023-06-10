@@ -13,10 +13,11 @@ import org.apache.commons.lang3.StringUtils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import java.io.Serializable;
 import java.util.*;
 import java.util.stream.Collectors;
 
-public class NebulaSession {
+public class NebulaSession implements Serializable {
     private static final Logger logger = LoggerFactory.getLogger(NebulaSession.class);
     public interface Executor {
         Object run(Session session, int ct);
