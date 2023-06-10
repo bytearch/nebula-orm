@@ -6,6 +6,8 @@ import com.vesoft.nebula.client.graph.NebulaPoolConfig;
 import com.vesoft.nebula.client.graph.data.HostAddress;
 import com.vesoft.nebula.client.graph.net.NebulaPool;
 import lombok.extern.slf4j.Slf4j;
+import org.apache.commons.lang3.StringUtils;
+import org.springframework.util.CollectionUtils;
 
 import java.io.Serializable;
 import java.net.UnknownHostException;
@@ -25,9 +27,9 @@ public class GraphSessionManager implements Serializable {
     private static Integer sessionGetMaxWaitTime = 60 * 1000;
 
     /**
-     * 标识名
+     * 组名
      */
-    private String name;
+    private String groupName;
 
     private NebulaGraphProperties nebulaGraphProperties;
 
@@ -55,6 +57,12 @@ public class GraphSessionManager implements Serializable {
      */
     private LinkedList<GraphSession> freeSessions = new LinkedList<GraphSession>();
 
+    public GraphSessionManager(String groupName, NebulaGraphProperties nebulaGraphProperties) {
+        this.groupName = groupName;
+        this.nebulaGraphProperties = nebulaGraphProperties;
+        init();
+    }
+
     private List<HostAddress> getGraphHostPort(List<String> hostAndPort) {
         List<HostAddress> hostAddresses = new ArrayList<>();
         for (String address : hostAndPort) {
@@ -66,11 +74,13 @@ public class GraphSessionManager implements Serializable {
         return hostAddresses;
     }
 
-    public void init() {
+    private void init() {
         init(this.nebulaGraphProperties);
     }
 
-    public void init(NebulaGraphProperties nebulaGraphProperties) {
+    private void init(NebulaGraphProperties nebulaGraphProperties) {
+        //check param
+        checkParam(nebulaGraphProperties);
         this.nebulaGraphProperties = nebulaGraphProperties;
         List<HostAddress> hostAndPorts = getGraphHostPort(nebulaGraphProperties.getHostAddresses());
         if (nebulaGraphProperties.getMinConnsSize() != 0) minConnectionSize = nebulaGraphProperties.getMinConnsSize();
@@ -90,12 +100,20 @@ public class GraphSessionManager implements Serializable {
             e.printStackTrace();
             throw new RuntimeException(e.getMessage());
         }
-        name = nebulaGraphProperties.getName();
         for (int i = 0; i < minConnectionSize; i++) {
-            GraphSession graphSession = SessionFactory.create(nebulaGraphProperties, pool);
+            GraphSession graphSession = SessionFactory.create(nebulaGraphProperties, groupName, pool);
             freeSessions.add(graphSession);
             freeCount.incrementAndGet();
             totalCount.incrementAndGet();
+        }
+    }
+
+    private void checkParam(NebulaGraphProperties nebulaGraphProperties) {
+        if (StringUtils.isBlank(nebulaGraphProperties.getSpace())) {
+            throw new NebulaOrmException("space cannot be empty");
+        }
+        if (CollectionUtils.isEmpty(nebulaGraphProperties.getHostAddresses())) {
+            throw new NebulaOrmException("nebula host address cannot be empty");
         }
     }
 
@@ -132,7 +150,7 @@ public class GraphSessionManager implements Serializable {
                         }
                     } else if (totalCount.get() < maxConnectionSize) {
                         //free is empty but cannot create
-                        graphSession = SessionFactory.create(nebulaGraphProperties, pool);
+                        graphSession = SessionFactory.create(nebulaGraphProperties, groupName, pool);
                         totalCount.incrementAndGet();
                     } else {
                         //wait single to free
@@ -180,7 +198,7 @@ public class GraphSessionManager implements Serializable {
                 graphSession.getSession().release();
             }
         } catch (Exception e) {
-            log.error("close nebula session error space:[{}], host:[{}:{}] emsg:" + e.getMessage(), graphSession.getName(), graphSession.getSession().getGraphHost().getHost(), graphSession.getSession().getGraphHost().getPort());
+            log.error("close nebula session error space:[{}], host:[{}:{}] emsg:" + e.getMessage(), graphSession.getGroupName(), graphSession.getSession().getGraphHost().getHost(), graphSession.getSession().getGraphHost().getPort());
             e.printStackTrace();
         }
     }
@@ -202,7 +220,7 @@ public class GraphSessionManager implements Serializable {
     @Override
     public String toString() {
         return "ConnectionManager{" +
-                "name" + name +
+                "groupName" + groupName +
                 ", totalCount=" + totalCount +
                 ", freeCount=" + freeCount +
                 ", freeConnections =" + freeSessions +
@@ -217,7 +235,7 @@ public class GraphSessionManager implements Serializable {
         this.nebulaGraphProperties = nebulaGraphProperties;
     }
 
-    public String getName() {
-        return name;
+    public String getGroupName() {
+        return groupName;
     }
 }

@@ -20,19 +20,15 @@ public class GraphManagerPool {
     private final static Map<String, NebulaGraphProperties> nebulaGraphPropertiesMap = new HashMap<>();
 
 
-    public static void initNebulaSessionManager(GraphGroupConfig graphGroupConfig) {
+    public static void sessionManagerInit(GraphGroupConfig graphGroupConfig) {
         for (Map.Entry<String, NebulaGraphProperties> nebulaGraphPropertiesEntry : graphGroupConfig.getProperties().entrySet()) {
-            GraphSessionManager graphSessionManager = new GraphSessionManager();
-            graphSessionManager.setNebulaGraphProperties(nebulaGraphPropertiesEntry.getValue());
-            graphSessionManager.init();
+            GraphSessionManager graphSessionManager = new GraphSessionManager(nebulaGraphPropertiesEntry.getKey(), nebulaGraphPropertiesEntry.getValue());
             CP.put(nebulaGraphPropertiesEntry.getKey(), graphSessionManager);
             nebulaGraphPropertiesMap.put(nebulaGraphPropertiesEntry.getKey(), nebulaGraphPropertiesEntry.getValue());
         }
-
-
     }
     public static void release(GraphSession session) {
-        GraphSessionManager graphSessionManager = CP.get(session.getName());
+        GraphSessionManager graphSessionManager = CP.get(session.getGroupName());
         if (graphSessionManager == null) {
             return;
         }
@@ -40,28 +36,26 @@ public class GraphManagerPool {
     }
 
     public static void close(GraphSession session) {
-        GraphSessionManager graphSessionManager = CP.get(session.getName());
+        GraphSessionManager graphSessionManager = CP.get(session.getGroupName());
         if (graphSessionManager == null) {
             return;
         }
         graphSessionManager.closeSession(session);
     }
-    public static GraphSession getSession(String name) {
-        if (StringUtils.isBlank(name)) {
+    public static GraphSession getSession(String groupName) {
+        if (StringUtils.isBlank(groupName)) {
             throw new NebulaOrmException("space cannot be empty!");
         }
-        GraphSessionManager graphSessionManager = CP.get(name);
+        GraphSessionManager graphSessionManager = CP.get(groupName);
         if (graphSessionManager == null) {
-            NebulaGraphProperties nebulaGraphProperties = nebulaGraphPropertiesMap.get(name);
+            NebulaGraphProperties nebulaGraphProperties = nebulaGraphPropertiesMap.get(groupName);
             if (nebulaGraphProperties == null) {
                 throw new NebulaOrmException("nebulaGraphProperties cannot be empty");
             }
             synchronized (GraphManagerPool.class) {
-                graphSessionManager = CP.get(name);
+                graphSessionManager = CP.get(groupName);
                 if (graphSessionManager == null) {
-                    graphSessionManager = new GraphSessionManager();
-                    //创建nebulaSessionManager
-                    graphSessionManager.init(nebulaGraphProperties);
+                    graphSessionManager = new GraphSessionManager(groupName, nebulaGraphProperties);
                 }
             }
         }

@@ -8,7 +8,7 @@ import java.io.Serializable;
 @Data
 public class GraphSession implements Serializable {
     private Session session;
-    private String name;
+    private String groupName;
     private String space;
     private Long lastAccessTime = System.currentTimeMillis();
 
@@ -29,9 +29,9 @@ public class GraphSession implements Serializable {
     private GraphSession() {
 
     }
-    public GraphSession(Session session, String name, String space) {
+    public GraphSession(Session session, String groupName, String space) {
         this.session = session;
-        this.name = name;
+        this.groupName = groupName;
         this.space = space;
     }
 
@@ -47,7 +47,7 @@ public class GraphSession implements Serializable {
     public String toString() {
         return "GraphSession{" +
                 "session=" + session +
-                ", name='" + name + '\'' +
+                ", name='" + groupName + '\'' +
                 ", space='" + space + '\'' +
                 ", lastAccessTime=" + lastAccessTime +
                 ", needActiveTest=" + needActiveTest +

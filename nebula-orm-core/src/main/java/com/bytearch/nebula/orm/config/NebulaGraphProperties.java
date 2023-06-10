@@ -17,5 +17,4 @@ public class NebulaGraphProperties {
     private int timeout;
     private int idleTime;
     private String space;
-    private String name;
 }
