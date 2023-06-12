@@ -10,6 +10,7 @@ public class GraphSession implements Serializable {
     private Session session;
     private String groupName;
     private String space;
+    private Boolean useCache;
     private Long lastAccessTime = System.currentTimeMillis();
 
     /**
@@ -29,10 +30,11 @@ public class GraphSession implements Serializable {
     private GraphSession() {
 
     }
-    public GraphSession(Session session, String groupName, String space) {
+    public GraphSession(Session session, String groupName, String space, Boolean useCache) {
         this.session = session;
         this.groupName = groupName;
         this.space = space;
+        this.useCache = useCache;
     }
 
     public boolean ping() {
@@ -51,6 +53,7 @@ public class GraphSession implements Serializable {
                 ", space='" + space + '\'' +
                 ", lastAccessTime=" + lastAccessTime +
                 ", needActiveTest=" + needActiveTest +
+                ", useCache=" + useCache +
                 '}';
     }
 }

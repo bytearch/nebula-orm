@@ -21,7 +21,7 @@ public class GraphSessionContainer {
 
 
     public static void sessionManagerInit(GraphGroupConfig graphGroupConfig) {
-        for (Map.Entry<String, NebulaGraphProperties> nebulaGraphPropertiesEntry : graphGroupConfig.getProperties().entrySet()) {
+        for (Map.Entry<String, NebulaGraphProperties> nebulaGraphPropertiesEntry : graphGroupConfig.getGroup().entrySet()) {
             GraphSessionManager graphSessionManager = new GraphSessionManager(nebulaGraphPropertiesEntry.getKey(), nebulaGraphPropertiesEntry.getValue());
             CP.put(nebulaGraphPropertiesEntry.getKey(), graphSessionManager);
             nebulaGraphPropertiesMap.put(nebulaGraphPropertiesEntry.getKey(), nebulaGraphPropertiesEntry.getValue());

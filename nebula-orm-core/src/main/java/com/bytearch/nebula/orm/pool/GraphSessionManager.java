@@ -26,6 +26,8 @@ public class GraphSessionManager implements Serializable {
     private static Integer minConnectionSize = 50;
     private static Integer sessionGetMaxWaitTime = 60 * 1000;
 
+    private static Integer cacheTime = 60000;
+
     /**
      * 组名
      */
@@ -89,10 +91,13 @@ public class GraphSessionManager implements Serializable {
         NebulaPoolConfig nebulaPoolConfig = new NebulaPoolConfig();
         nebulaPoolConfig = nebulaPoolConfig.setMaxConnSize(maxConnectionSize);
         nebulaPoolConfig = nebulaPoolConfig.setMinConnSize(minConnectionSize);
-        nebulaPoolConfig = nebulaPoolConfig.setIdleTime(1000 * 600);
+        if (nebulaGraphProperties.getIdleTime() > 0) {
+            nebulaPoolConfig.setIdleTime(nebulaGraphProperties.getIdleTime() + 1000);
+        }
         boolean init = false;
         try {
             init = pool.init(hostAndPorts, nebulaPoolConfig);
+            log.info("nebula group:{} 连接池init, 是否成功:{}", this.getGroupName(), init);
             if (!init) {
                 throw new RuntimeException("Nebula连接初始化失败");
             }
@@ -100,11 +105,13 @@ public class GraphSessionManager implements Serializable {
             e.printStackTrace();
             throw new RuntimeException(e.getMessage());
         }
-        for (int i = 0; i < minConnectionSize; i++) {
-            GraphSession graphSession = SessionFactory.create(nebulaGraphProperties, groupName, pool);
-            freeSessions.add(graphSession);
-            freeCount.incrementAndGet();
-            totalCount.incrementAndGet();
+        if (nebulaGraphProperties.isUseCache()) {
+            for (int i = 0; i < minConnectionSize; i++) {
+                GraphSession graphSession = SessionFactory.create(nebulaGraphProperties, groupName, pool);
+                freeSessions.add(graphSession);
+                freeCount.incrementAndGet();
+                totalCount.incrementAndGet();
+            }
         }
     }
 
@@ -118,60 +125,64 @@ public class GraphSessionManager implements Serializable {
     }
 
     public GraphSession getSession() throws NebulaOrmException {
-        Long start = System.currentTimeMillis();
-        lock.lock();
-        try {
-            GraphSession graphSession = null;
-            while (true) {
-                if (freeCount.get() > 0) {
-                    //has free session
-                    freeCount.decrementAndGet();
-                    graphSession = freeSessions.poll();
-                    if (graphSession != null) {
-                        if ((System.currentTimeMillis() - graphSession.getLastAccessTime()) > maxIdeTimeSecond) {
-                            closeSession(graphSession);
-                            continue;
-                        }
-                        if (graphSession.isNeedActiveTest()) {
-                            boolean isActive = false;
-                            try {
-                                isActive = graphSession.ping();
-                            } catch (NebulaOrmException e) {
-                                HostAddress graphAddress = graphSession.getSession().getGraphHost();
-                                log.error("ping to server[" + graphAddress.getHost() + ":" + graphAddress.getPort() + "] active test error ,emsg:" + e.getMessage());
-                                isActive = false;
-                            }
-                            if (!isActive) {
+        if (nebulaGraphProperties.isUseCache()) {
+            Long start = System.currentTimeMillis();
+            lock.lock();
+            try {
+                GraphSession graphSession = null;
+                while (true) {
+                    if (freeCount.get() > 0) {
+                        //has free session
+                        freeCount.decrementAndGet();
+                        graphSession = freeSessions.poll();
+                        if (graphSession != null) {
+                            if ((System.currentTimeMillis() - graphSession.getLastAccessTime()) > maxIdeTimeSecond || !graphSession.ping()) {
                                 closeSession(graphSession);
                                 continue;
-                            } else {
-                                graphSession.setNeedActiveTest(false);
                             }
-                        }
-                    } else if (totalCount.get() < maxConnectionSize) {
-                        //free is empty but cannot create
-                        graphSession = SessionFactory.create(nebulaGraphProperties, groupName, pool);
-                        totalCount.incrementAndGet();
-                    } else {
-                        //wait single to free
-                        try {
-                            if (condition.await(sessionGetMaxWaitTime, TimeUnit.MILLISECONDS)) {
-                                //wait single success
-                                continue;
-                            }
-                            throw new NebulaOrmException(String.format("get nebula session timeout:%s, properties:%s", sessionGetMaxWaitTime, nebulaGraphProperties));
-                        } catch (InterruptedException e) {
-                            e.printStackTrace();
-                            throw new NebulaOrmException(String.format("get nebula session error:%s, properties:%s", sessionGetMaxWaitTime, nebulaGraphProperties));
+                           /* if (graphSession.isNeedActiveTest()) {
+                                boolean isActive = false;
+                                try {
+                                    isActive = graphSession.ping();
+                                } catch (NebulaOrmException e) {
+                                    HostAddress graphAddress = graphSession.getSession().getGraphHost();
+                                    log.error("ping to server[" + graphAddress.getHost() + ":" + graphAddress.getPort() + "] active test error ,emsg:" + e.getMessage());
+                                    isActive = false;
+                                }
+                                if (!isActive) {
+                                    closeSession(graphSession);
+                                    continue;
+                                } else {
+                                    graphSession.setNeedActiveTest(false);
+                                }
+                            }*/
+                        } else if (totalCount.get() < maxConnectionSize) {
+                            //free is empty but cannot create
+                            graphSession = SessionFactory.create(nebulaGraphProperties, groupName, pool);
+                            totalCount.incrementAndGet();
+                        } else {
+                            //wait single to free
+                            try {
+                                if (condition.await(sessionGetMaxWaitTime, TimeUnit.MILLISECONDS)) {
+                                    //wait single success
+                                    continue;
+                                }
+                                throw new NebulaOrmException(String.format("get nebula session timeout:%s, properties:%s", sessionGetMaxWaitTime, nebulaGraphProperties));
+                            } catch (InterruptedException e) {
+                                e.printStackTrace();
+                                throw new NebulaOrmException(String.format("get nebula session error:%s, properties:%s", sessionGetMaxWaitTime, nebulaGraphProperties));
 
+                            }
                         }
                     }
+                    log.debug("获取Session:{} 耗时 :{} ms", graphSession, System.currentTimeMillis() - start);
+                    return graphSession;
                 }
-                log.debug("获取Session:{} 耗时 :{} ms", graphSession, System.currentTimeMillis() - start);
-                return graphSession;
+            } finally {
+                lock.unlock();
             }
-        } finally {
-            lock.unlock();
+        } else {
+            return SessionFactory.create(nebulaGraphProperties, groupName, pool);
         }
     }
 
@@ -179,28 +190,38 @@ public class GraphSessionManager implements Serializable {
         if (connection == null) {
             return;
         }
-        lock.lock();
-        try {
-            connection.setLastAccessTime(System.currentTimeMillis());
-            freeSessions.add(connection);
-            freeCount.incrementAndGet();
-            condition.signal();
-        } finally {
-            lock.unlock();
+        if (connection.getUseCache()) {
+            lock.lock();
+            try {
+                connection.setLastAccessTime(System.currentTimeMillis());
+                freeSessions.add(connection);
+                freeCount.incrementAndGet();
+                condition.signal();
+            } finally {
+                lock.unlock();
+            }
+        } else {
+            connection.getSession().release();
         }
+        log.info("release session :{}, useCache:{}", connection.getSession(), connection.getUseCache());
 
     }
 
     public void closeSession(GraphSession graphSession) {
+        if (graphSession == null) {
+            return;
+        }
+        //不管是否启用cache 都是release
         try {
-            if (graphSession != null) {
+            if (graphSession.getUseCache()) {
                 totalCount.decrementAndGet();
-                graphSession.getSession().release();
             }
+            graphSession.getSession().release();
         } catch (Exception e) {
             log.error("close nebula session error space:[{}], host:[{}:{}] emsg:" + e.getMessage(), graphSession.getGroupName(), graphSession.getSession().getGraphHost().getHost(), graphSession.getSession().getGraphHost().getPort());
             e.printStackTrace();
         }
+        log.info("close session :{}, useCache:{}", graphSession.getSession(), graphSession.getUseCache());
     }
 
     public void setActiveTestFlag() {

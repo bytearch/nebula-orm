@@ -18,4 +18,8 @@ public class NebulaGraphProperties implements Serializable {
     private int timeout;
     private int idleTime;
     private String space;
+    /**
+     * 是否启用cache
+     */
+    private boolean useCache;
 }

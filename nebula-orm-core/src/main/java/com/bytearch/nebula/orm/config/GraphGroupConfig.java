@@ -10,5 +10,5 @@ public class GraphGroupConfig implements Serializable {
     /**
      * 配置对象  key: name 名称 value: 配置
      */
-    private Map<String, NebulaGraphProperties> properties;
+    private Map<String, NebulaGraphProperties> group;
 }
