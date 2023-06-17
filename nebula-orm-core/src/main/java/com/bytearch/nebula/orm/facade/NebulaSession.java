@@ -138,7 +138,7 @@ public class NebulaSession implements Serializable {
                 resultList.add(map);
             });
             restJson.put(NebulaConstant.NebulaJson.DATA.getKey(), resultList);
-            logger.debug("nebula execute success! sql:{} cost:{} ms", sql, System.currentTimeMillis() - t1);
+            logger.info("nebula execute success! sql:{} cost:{} ms", sql, System.currentTimeMillis() - t1);
         } catch (Exception e) {
             restJson.put(NebulaConstant.NebulaJson.CODE.getKey(), NebulaConstant.ERROR_CODE);
             restJson.put(NebulaConstant.NebulaJson.MESSAGE.getKey(), e.toString());

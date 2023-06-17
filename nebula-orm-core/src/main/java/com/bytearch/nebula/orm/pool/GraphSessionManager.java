@@ -65,7 +65,8 @@ public class GraphSessionManager implements Serializable {
         init();
     }
 
-    private List<HostAddress> getGraphHostPort(List<String> hostAndPort) {
+    private List<HostAddress> getGraphHostPort(String hostAndPortStr) {
+        String[] hostAndPort= hostAndPortStr.split(";");
         List<HostAddress> hostAddresses = new ArrayList<>();
         for (String address : hostAndPort) {
             String[] split = address.split(":");
@@ -99,10 +100,12 @@ public class GraphSessionManager implements Serializable {
             init = pool.init(hostAndPorts, nebulaPoolConfig);
             log.info("nebula group:{} 连接池init, 是否成功:{}", this.getGroupName(), init);
             if (!init) {
-                throw new RuntimeException("Nebula连接初始化失败");
+                log.error("nebula init error ");
+                throw new RuntimeException("nebula group");
             }
         } catch (UnknownHostException e) {
             e.printStackTrace();
+            log.error("nebula init error  e:", e);
             throw new RuntimeException(e.getMessage());
         }
         if (nebulaGraphProperties.isUseCache()) {
@@ -119,7 +122,7 @@ public class GraphSessionManager implements Serializable {
         if (StringUtils.isBlank(nebulaGraphProperties.getSpace())) {
             throw new NebulaOrmException("space cannot be empty");
         }
-        if (CollectionUtils.isEmpty(nebulaGraphProperties.getHostAddresses())) {
+        if (StringUtils.isBlank(nebulaGraphProperties.getHostAddresses())) {
             throw new NebulaOrmException("nebula host address cannot be empty");
         }
     }

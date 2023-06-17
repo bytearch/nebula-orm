@@ -3,7 +3,6 @@ package com.bytearch.nebula.orm.config;
 import lombok.Data;
 
 import java.io.Serializable;
-import java.util.List;
 
 @Data
 public class NebulaGraphProperties implements Serializable {
@@ -12,7 +11,7 @@ public class NebulaGraphProperties implements Serializable {
     /**
      * 格式：ip:port
      */
-    private List<String> hostAddresses;
+    private String hostAddresses;
     private int minConnsSize = 5;
     private int MaxConnsSize = 500;
     private int timeout;
