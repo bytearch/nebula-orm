@@ -93,7 +93,7 @@ public class GraphSessionManager implements Serializable {
         nebulaPoolConfig = nebulaPoolConfig.setMaxConnSize(maxConnectionSize);
         nebulaPoolConfig = nebulaPoolConfig.setMinConnSize(minConnectionSize);
         if (nebulaGraphProperties.getIdleTime() > 0) {
-            nebulaPoolConfig.setIdleTime(nebulaGraphProperties.getIdleTime() + 1000);
+            nebulaPoolConfig.setIdleTime(nebulaGraphProperties.getIdleTime());
         }
         boolean init = false;
         try {
@@ -101,7 +101,7 @@ public class GraphSessionManager implements Serializable {
             log.info("nebula group:{} 连接池init, 是否成功:{}", this.getGroupName(), init);
             if (!init) {
                 log.error("nebula init error ");
-                throw new RuntimeException("nebula group");
+                throw new RuntimeException("nebula group init error! please check !");
             }
         } catch (UnknownHostException e) {
             e.printStackTrace();
