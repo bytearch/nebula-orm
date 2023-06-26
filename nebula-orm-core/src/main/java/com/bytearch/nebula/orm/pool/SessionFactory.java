@@ -17,7 +17,9 @@ public class SessionFactory {
     public static GraphSession create(NebulaGraphProperties nebulaGraphProperties, String groupName, NebulaPool nebulaPool) {
         try {
             Session session = nebulaPool.getSession(nebulaGraphProperties.getUserName(), nebulaGraphProperties.getPassword(), true);
-            session.execute("USE " + nebulaGraphProperties.getSpace() + ";");
+            if (nebulaGraphProperties.isUseCache()) {
+               session.execute("USE " + nebulaGraphProperties.getSpace() + ";");
+            }
             return new GraphSession(session, groupName, nebulaGraphProperties.getSpace(),nebulaGraphProperties.isUseCache());
         } catch (Exception e) {
             log.error("create session error e:", e);

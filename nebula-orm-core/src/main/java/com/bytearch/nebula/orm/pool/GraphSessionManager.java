@@ -1,7 +1,9 @@
 package com.bytearch.nebula.orm.pool;
 
 import com.bytearch.nebula.orm.config.NebulaGraphProperties;
+import com.bytearch.nebula.orm.config.PoolProperties;
 import com.bytearch.nebula.orm.exception.NebulaOrmException;
+import com.google.common.util.concurrent.ThreadFactoryBuilder;
 import com.vesoft.nebula.client.graph.NebulaPoolConfig;
 import com.vesoft.nebula.client.graph.data.HostAddress;
 import com.vesoft.nebula.client.graph.net.NebulaPool;
@@ -14,6 +16,8 @@ import java.net.UnknownHostException;
 import java.util.ArrayList;
 import java.util.LinkedList;
 import java.util.List;
+import java.util.concurrent.Executors;
+import java.util.concurrent.ScheduledExecutorService;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicInteger;
 import java.util.concurrent.locks.Condition;
@@ -27,6 +31,10 @@ public class GraphSessionManager implements Serializable {
     private static Integer sessionGetMaxWaitTime = 60 * 1000;
 
     private static Integer cacheTime = 60000;
+    private final ScheduledExecutorService scheduledExecutor = Executors.newSingleThreadScheduledExecutor(
+            new ThreadFactoryBuilder().setNameFormat("graph-manage-trigger-thread-%d")
+                    .setDaemon(true)
+                    .build());
 
     /**
      * 组名
@@ -116,6 +124,7 @@ public class GraphSessionManager implements Serializable {
                 totalCount.incrementAndGet();
             }
         }
+        scheduledExecutor.schedule(this::getPoolStat, 1, TimeUnit.MINUTES);
     }
 
     private void checkParam(NebulaGraphProperties nebulaGraphProperties) {
@@ -178,7 +187,7 @@ public class GraphSessionManager implements Serializable {
                             }
                         }
                     }
-                    log.debug("获取Session:{} 耗时 :{} ms", graphSession, System.currentTimeMillis() - start);
+                    log.info("获取Session:{} 耗时 :{} ms", graphSession, System.currentTimeMillis() - start);
                     return graphSession;
                 }
             } finally {
@@ -261,5 +270,23 @@ public class GraphSessionManager implements Serializable {
 
     public String getGroupName() {
         return groupName;
+    }
+
+    public PoolProperties getPoolStat() {
+        PoolProperties poolProperties = new PoolProperties();
+       try {
+           int activeConnNum = this.pool.getActiveConnNum();
+           int idleConnNum = this.pool.getIdleConnNum();
+           int waitersNum = this.pool.getWaitersNum();
+           poolProperties.setActiveConnNum(activeConnNum);
+           poolProperties.setIdleConnNum(idleConnNum);
+           poolProperties.setWaitersNum(waitersNum);
+           poolProperties.setMinConnNum(this.nebulaGraphProperties.getMinConnsSize());
+           poolProperties.setMaxConnNum(this.nebulaGraphProperties.getMaxConnsSize());
+       } catch (Exception e) {
+           log.error("get pool stat error e:", e);
+       }
+       log.info("pool stat" + poolProperties);
+        return poolProperties;
     }
 }
