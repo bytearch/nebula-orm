@@ -14,7 +14,7 @@
 
     <properties>
         <springboot-version>2.7.0</springboot-version>
-        <nebula.client.version>3.5.0</nebula.client.version>
+        <nebula.client.version>3.5.0.fork</nebula.client.version>
         <fastjson.version>1.2.68</fastjson.version>
         <lombok.version>1.16.22</lombok.version>
     </properties>
