@@ -4,9 +4,8 @@ import lombok.Data;
 
 @Data
 public class PoolProperties {
-   private int activeConnNum;
-   private int idleConnNum;
-   private int waitersNum;
+   private int sessionNums;
+   private int idleSessionNums;
 
    private int minConnNum;
 

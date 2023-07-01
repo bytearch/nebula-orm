@@ -7,14 +7,14 @@
     <groupId>com.bytearch</groupId>
     <artifactId>nebula-orm</artifactId>
     <packaging>pom</packaging>
-    <version>1.1-SNAPSHOT</version>
+    <version>3.5.0-SNAPSHOT</version>
     <modules>
         <module>nebula-orm-core</module>
     </modules>
 
     <properties>
         <springboot-version>2.7.0</springboot-version>
-        <nebula.client.version>3.0.0</nebula.client.version>
+        <nebula.client.version>3.5.0</nebula.client.version>
         <fastjson.version>1.2.68</fastjson.version>
         <lombok.version>1.16.22</lombok.version>
     </properties>
