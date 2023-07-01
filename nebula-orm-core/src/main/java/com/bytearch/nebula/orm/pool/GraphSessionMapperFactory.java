@@ -33,6 +33,7 @@ public class GraphSessionMapperFactory {
             if (nebulaGraphProperties.getMinConnsSize() != 0) sessionPoolConfig.setMinSessionSize(nebulaGraphProperties.getMinConnsSize());
             if (nebulaGraphProperties.getMaxConnsSize() != 0) sessionPoolConfig.setMaxSessionSize(nebulaGraphProperties.getMaxConnsSize());
             SessionPool sessionPool = new SessionPool(sessionPoolConfig);
+            log.info("init session pool config:{}", sessionPoolConfig);
             if (!sessionPool.init()) {
                 log.error("session pool init failed.");
                 throw new Exception("session pool init failed.");
