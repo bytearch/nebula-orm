@@ -57,11 +57,11 @@ public class NebulaExecute implements Serializable {
         JSONObject restJson = new JSONObject();
         try {
             restJson = session.getSessionPool().executeJson(sql);
-            logger.error("[nebula-orm] execute sql success   cost:{}ms  sql:{}", sql, System.currentTimeMillis() - t1);
+            logger.info("[nebula-orm] execute sql success   cost:{} ms  sql:{}", System.currentTimeMillis() - t1, sql );
         } catch (IOErrorException | AuthFailedException |  BindSpaceFailedException e) {
             restJson.put(NebulaConstant.NebulaJson.CODE.getKey(), NebulaConstant.ERROR_CODE);
             restJson.put(NebulaConstant.NebulaJson.MESSAGE.getKey(), e.toString());
-            logger.error("[nebula-orm] execute sql error sql:{} e:{}  cost:{}", sql, e, System.currentTimeMillis() - t1);
+            logger.error("[nebula-orm] execute sql error sql:{} e:{}  cost:{} ms", sql, e, System.currentTimeMillis() - t1);
             throw new   NebulaOrmException(e.getMessage());
         }
         return restJson;
