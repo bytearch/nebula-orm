@@ -2,7 +2,6 @@ package com.bytearch.nebula.orm.pool;
 
 import com.bytearch.nebula.orm.config.NebulaGraphProperties;
 import com.bytearch.nebula.orm.exception.NebulaOrmException;
-import com.vesoft.nebula.client.graph.SessionPool;
 import com.vesoft.nebula.client.graph.SessionPoolConfig;
 import com.vesoft.nebula.client.graph.data.HostAddress;
 import lombok.extern.slf4j.Slf4j;
